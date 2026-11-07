@@ -43,6 +43,7 @@ struct Dashboard: Decodable {
         struct Chart: Decodable {
             let labels: [String]
             let profit: [Double]
+            let revenue: [Double]
             let expenseSpend: [Double]
         }
         let periodLabel: String

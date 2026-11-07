@@ -135,13 +135,19 @@ struct ContentView: View {
                 Chart {
                     ForEach(data.financials.charts.labels.indices, id: \.self) { index in
                         if index < data.financials.charts.profit.count,
+                           index < data.financials.charts.revenue.count,
                            index < data.financials.charts.expenseSpend.count {
                             LineMark(x: .value("Month", data.financials.charts.labels[index]),
                                      y: .value("Amount", data.financials.charts.profit[index]))
                                 .foregroundStyle(by: .value("Type", "Profit"))
                             BarMark(x: .value("Month", data.financials.charts.labels[index]),
+                                    y: .value("Amount", data.financials.charts.revenue[index]))
+                                .foregroundStyle(by: .value("Type", "Revenue kept"))
+                                .position(by: .value("Type", "Revenue kept"))
+                            BarMark(x: .value("Month", data.financials.charts.labels[index]),
                                     y: .value("Amount", data.financials.charts.expenseSpend[index]))
                                 .foregroundStyle(by: .value("Type", "Expenses"))
+                                .position(by: .value("Type", "Expenses"))
                         }
                     }
                 }
