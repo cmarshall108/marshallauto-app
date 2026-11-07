@@ -42,30 +42,6 @@ final class AppModel: ObservableObject {
                 throw APIError.server("Your session has expired. Sign in again.")
             }
 
-            func loadVehicles(status: String, page: Int = 1) async {
-                await run {
-                    vehicles = try await api.get("/admin/mobile/vehicles?status=\(status)&page=\(page)")
-                }
-            }
-
-            func loadLeads(spam: Bool, page: Int = 1) async {
-                await run {
-                    leads = try await api.get("/admin/mobile/leads?view=\(spam ? "spam" : "inbox")&page=\(page)")
-                }
-            }
-
-            func updateLead(_ lead: MobileLead, action: String, spam: Bool, page: Int) async {
-                await run {
-                    _ = try await api.post("/admin/mobile/leads/\(lead.id)/\(action)", values: [:])
-                    let mailbox = spam ? "spam" : "inbox"
-                    let updated: LeadPage = try await api.get("/admin/mobile/leads?view=\(mailbox)&page=\(page)")
-                    if updated.items.isEmpty && page > 1 {
-                        leads = try await api.get("/admin/mobile/leads?view=\(mailbox)&page=\(page - 1)")
-                    } else {
-                        leads = updated
-                    }
-                }
-            }
             if state.needsOnboarding {
                 screen = .onboarding
                 return
@@ -75,10 +51,37 @@ final class AppModel: ObservableObject {
         }
     }
 
+    func loadVehicles(status: String, page: Int = 1) async {
+        await run {
+            vehicles = try await api.get("/admin/mobile/vehicles?status=\(status)&page=\(page)")
+        }
+    }
+
+    func loadLeads(spam: Bool, page: Int = 1) async {
+        await run {
+            leads = try await api.get("/admin/mobile/leads?view=\(spam ? "spam" : "inbox")&page=\(page)")
+        }
+    }
+
+    func updateLead(_ lead: MobileLead, action: String, spam: Bool, page: Int) async {
+        await run {
+            _ = try await api.post("/admin/mobile/leads/\(lead.id)/\(action)", values: [:])
+            let mailbox = spam ? "spam" : "inbox"
+            let updated: LeadPage = try await api.get("/admin/mobile/leads?view=\(mailbox)&page=\(page)")
+            if updated.items.isEmpty && page > 1 {
+                leads = try await api.get("/admin/mobile/leads?view=\(mailbox)&page=\(page - 1)")
+            } else {
+                leads = updated
+            }
+        }
+    }
+
     func logout() async {
         await run {
             _ = try await api.post("/admin/mobile/logout", values: [:])
             dashboard = nil
+            vehicles = nil
+            leads = nil
             screen = .login
         }
     }
