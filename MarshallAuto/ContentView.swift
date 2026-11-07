@@ -1,5 +1,4 @@
 import SwiftUI
-import Charts
 
 struct ContentView: View {
     @ObservedObject var model: AppModel
@@ -27,16 +26,19 @@ struct ContentView: View {
                     )
                 case .dashboard:
                     if let dashboard = model.dashboard {
-                        dashboardView(dashboard)
+                        DashboardView(model: model, data: dashboard)
                     }
                 }
             }
-            .navigationTitle("Marshall Auto Admin")
+            .navigationTitle(model.screen == .dashboard ? "Dashboard" : "Staff access")
             .navigationBarTitleDisplayMode(.inline)
+            .tint(.primary)
             .disabled(model.busy)
             .overlay {
                 if model.busy {
-                    ProgressView().padding().background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    ProgressView("Loading")
+                        .padding()
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
                 }
             }
             .alert("Unable to continue", isPresented: Binding(
@@ -51,33 +53,74 @@ struct ContentView: View {
     }
 
     private var loginView: some View {
-        Form {
-            Section("Staff sign in") {
-                TextField("Username", text: $username)
-                    .textContentType(.username)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                SecureField("Password", text: $password)
-                    .textContentType(.password)
-                Button("Sign in") {
-                    let submittedPassword = password
-                    password = ""
-                    Task { await model.login(username: username, password: submittedPassword) }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                brandHeader
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Welcome back").font(.largeTitle.bold())
+                    Text("Sign in to your staff account to manage your day.")
+                        .foregroundStyle(.secondary)
                 }
-                .disabled(username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty)
+                BrandCard {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("STAFF SIGN IN")
+                            .font(.caption.weight(.bold)).foregroundStyle(.secondary)
+                        TextField("Username", text: $username)
+                            .textContentType(.username)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .padding(14)
+                            .background(Brand.background, in: RoundedRectangle(cornerRadius: 12))
+                        SecureField("Password", text: $password)
+                            .textContentType(.password)
+                            .padding(14)
+                            .background(Brand.background, in: RoundedRectangle(cornerRadius: 12))
+                        Button {
+                            let submittedPassword = password
+                            password = ""
+                            Task { await model.login(username: username, password: submittedPassword) }
+                        } label: {
+                            Label("Sign in", systemImage: "arrow.right")
+                                .frame(maxWidth: .infinity).padding(.vertical, 7)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(Brand.navy)
+                        .disabled(username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty)
+                    }
+                }
+                Label("Your account is protected with staff authentication.", systemImage: "lock.shield")
+                    .font(.footnote).foregroundStyle(.secondary)
             }
-            Section {
-                Text("Use your existing staff account. Two-factor authentication may be required.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+            .padding(20)
+            .frame(maxWidth: 520)
+            .frame(maxWidth: .infinity)
+        }
+        .background(Brand.background)
+    }
+
+    private var brandHeader: some View {
+        HStack(spacing: 14) {
+            Image(systemName: "car.front.fill")
+                .font(.title2)
+                .foregroundStyle(Brand.navy)
+                .frame(width: 50, height: 50)
+                .background(Brand.gold, in: RoundedRectangle(cornerRadius: 15))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("MARSHALL AUTO").font(.headline.weight(.heavy))
+                Text("STAFF COMPANION").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
             }
         }
+        .padding(.top, 24)
     }
 
     private var verificationView: some View {
         Form {
-            Section("Authenticator or recovery code") {
-                TextField("Code", text: $code)
+            Section {
+                Label("Verify your identity", systemImage: "lock.shield")
+                    .font(.headline)
+                Text("Enter your authenticator code or an unused recovery code.")
+                    .font(.subheadline).foregroundStyle(.secondary)
+                TextField("Authenticator or recovery code", text: $code)
                     .textContentType(.oneTimeCode)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -109,103 +152,5 @@ struct ContentView: View {
                 }
             }
         }
-    }
-
-    private func dashboardView(_ data: Dashboard) -> some View {
-        List {
-            Section("Staff tools") {
-                NavigationLink("Vehicles") { VehiclesView(model: model) }
-                NavigationLink("Leads") { LeadsView(model: model) }
-            }
-            Section("Dashboard") {
-                stat("Available vehicles", data.stats.availableVehicles)
-                stat("Total vehicles", data.stats.totalVehicles)
-                stat("Sold vehicles", data.stats.soldVehicles)
-                stat("Pending leads", data.stats.pendingLeads)
-                stat("Total leads", data.stats.totalLeads)
-                stat("Service records", data.stats.serviceRecords)
-                stat("CarFax reports", data.stats.carfaxReports)
-                stat("Test drives out", data.stats.activeTestDrives)
-                LabeledContent("Average rating", value: data.stats.avgRating.map { String(format: "%.2f", $0) } ?? "—")
-                stat("Approved reviews", data.stats.reviewCount)
-            }
-            Section("Monthly profit and expenses · \(data.financials.periodLabel)") {
-                LabeledContent("Gross profit", value: money(data.financials.kpis.grossProfit))
-                LabeledContent("Revenue kept", value: money(data.financials.kpis.revenue))
-                LabeledContent("Cash expenses", value: money(data.financials.kpis.expenseSpend))
-                if let current = data.financials.current {
-                    LabeledContent(current.label, value: money(current.grossProfit))
-                }
-                Chart {
-                    ForEach(data.financials.charts.labels.indices, id: \.self) { index in
-                        if index < data.financials.charts.profit.count,
-                           index < data.financials.charts.revenue.count,
-                           index < data.financials.charts.expenseSpend.count {
-                            LineMark(x: .value("Month", data.financials.charts.labels[index]),
-                                     y: .value("Amount", data.financials.charts.profit[index]))
-                                .foregroundStyle(by: .value("Type", "Profit"))
-                            BarMark(x: .value("Month", data.financials.charts.labels[index]),
-                                    y: .value("Amount", data.financials.charts.revenue[index]))
-                                .foregroundStyle(by: .value("Type", "Revenue kept"))
-                                .position(by: .value("Type", "Revenue kept"))
-                            BarMark(x: .value("Month", data.financials.charts.labels[index]),
-                                    y: .value("Amount", data.financials.charts.expenseSpend[index]))
-                                .foregroundStyle(by: .value("Type", "Expenses"))
-                                .position(by: .value("Type", "Expenses"))
-                        }
-                    }
-                }
-                .frame(height: 180)
-                .accessibilityLabel("Monthly profit and expenses")
-            }
-            Section("Recent leads") {
-                if data.recentLeads.isEmpty {
-                    Text("No leads yet.").foregroundStyle(.secondary)
-                }
-                ForEach(Array(data.recentLeads.enumerated()), id: \.offset) { _, lead in
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text(lead.name).font(.headline)
-                            Spacer()
-                            Text(lead.isRead ? "Read" : "New").font(.caption)
-                        }
-                        Text(lead.email)
-                        if let phone = lead.phone, !phone.isEmpty { Text(phone) }
-                        Text(lead.vehicle ?? "General inquiry")
-                        Text(lead.createdAt.replacingOccurrences(of: "T", with: " ").prefix(16))
-                    }
-                    .font(.subheadline)
-                }
-            }
-            Section("Top search terms · last 30 days") {
-                if data.topSearches.isEmpty { Text("No search activity recorded yet.").foregroundStyle(.secondary) }
-                ForEach(Array(data.topSearches.enumerated()), id: \.offset) { _, item in
-                    LabeledContent(item.label, value: "\(item.count)")
-                }
-            }
-            Section("Most viewed vehicles · last 30 days") {
-                if data.mostViewedVehicles.isEmpty { Text("No vehicle views recorded yet.").foregroundStyle(.secondary) }
-                ForEach(Array(data.mostViewedVehicles.enumerated()), id: \.offset) { _, item in
-                    LabeledContent(item.title, value: "\(item.views) views")
-                }
-            }
-        }
-        .refreshable { await model.refresh() }
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Sign out") { Task { await model.logout() } }
-            }
-        }
-    }
-
-    private func stat(_ label: String, _ value: Int) -> some View {
-        LabeledContent(label, value: "\(value)")
-    }
-
-    private func money(_ value: String) -> String {
-        guard let amount = Decimal(string: value, locale: Locale(identifier: "en_US_POSIX")) else {
-            return value
-        }
-        return amount.formatted(.currency(code: "USD"))
     }
 }

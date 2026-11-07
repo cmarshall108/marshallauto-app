@@ -9,6 +9,8 @@ The app also provides a read-only, paginated inventory list with status filters
 and lead inbox/spam lists with mark-read, spam/restore, and delete actions.
 Vehicle editing, sales, documents and media, and other administrative workflows
 are not yet implemented natively. Lead rescan and empty-spam remain website-only.
+The dashboard uses adaptive colors, staff-tool shortcuts and cards for the
+existing metrics, financials and recent activity.
 
 First-time authenticator enrollment, recovery-code saving, and staff profile
 setup are completed on the website. The app directs staff there and asks them

@@ -24,12 +24,23 @@ struct VehiclesView: View {
                         NavigationLink {
                             VehicleDetailView(vehicle: vehicle)
                         } label: {
-                            VStack(alignment: .leading) {
-                                Text(vehicle.title).font(.headline)
-                                Text("\(vehicle.status.capitalized)\(vehicle.isComingSoon ? " · Coming soon" : "")")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
+                            HStack(spacing: 14) {
+                                Image(systemName: "car.side.fill")
+                                    .foregroundStyle(Brand.navy)
+                                    .frame(width: 46, height: 46)
+                                    .background(Brand.gold.opacity(0.65), in: RoundedRectangle(cornerRadius: 13))
+                                    .accessibilityHidden(true)
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text(vehicle.title).font(.headline)
+                                    Text("\(Brand.money(vehicle.price)) · \(vehicle.mileage.formatted()) mi")
+                                        .font(.subheadline).foregroundStyle(.secondary)
+                                    StatusBadge(
+                                        text: vehicle.isComingSoon ? "Coming soon" : vehicle.status.capitalized,
+                                        highlighted: vehicle.status == "available"
+                                    )
+                                }
                             }
+                            .padding(.vertical, 5)
                         }
                     }
                 }
@@ -66,7 +77,7 @@ struct VehicleDetailView: View {
             if vehicle.isComingSoon { LabeledContent("Coming soon", value: "Yes") }
             LabeledContent("VIN", value: vehicle.vin ?? "N/A")
             LabeledContent("Stock number", value: vehicle.stockNumber ?? "N/A")
-            LabeledContent("Price", value: currency(vehicle.price))
+            LabeledContent("Price", value: Brand.money(vehicle.price))
             LabeledContent("Mileage", value: vehicle.mileage.formatted())
             LabeledContent("Added", value: String(vehicle.createdAt.prefix(10)))
             Section {
@@ -77,12 +88,6 @@ struct VehicleDetailView: View {
         .navigationTitle(vehicle.title)
     }
 
-    private func currency(_ value: String) -> String {
-        guard let amount = Decimal(string: value, locale: Locale(identifier: "en_US_POSIX")) else {
-            return value
-        }
-        return amount.formatted(.currency(code: "USD"))
-    }
 }
 
 struct LeadsView: View {
@@ -106,14 +111,24 @@ struct LeadsView: View {
                         NavigationLink {
                             LeadDetailView(model: model, lead: lead, spam: spam, page: result.page)
                         } label: {
-                            VStack(alignment: .leading) {
-                                HStack {
-                                    Text(lead.name).font(.headline)
-                                    Spacer()
-                                    if !lead.isRead { Text("New").font(.caption).foregroundStyle(.blue) }
+                            HStack(spacing: 14) {
+                                Image(systemName: "person.fill")
+                                    .foregroundStyle(Brand.navy)
+                                    .frame(width: 46, height: 46)
+                                    .background(Brand.gold.opacity(0.65), in: RoundedRectangle(cornerRadius: 13))
+                                    .accessibilityHidden(true)
+                                VStack(alignment: .leading, spacing: 5) {
+                                    HStack {
+                                        Text(lead.name).font(.headline)
+                                        Spacer()
+                                        if !lead.isRead { StatusBadge(text: "New", highlighted: true) }
+                                    }
+                                    Text(lead.vehicle ?? "General inquiry")
+                                        .font(.subheadline).foregroundStyle(.secondary)
+                                    Text(lead.email).font(.caption).foregroundStyle(.secondary)
                                 }
-                                Text(lead.vehicle ?? "General inquiry").foregroundStyle(.secondary)
                             }
+                            .padding(.vertical, 5)
                         }
                     }
                 }
