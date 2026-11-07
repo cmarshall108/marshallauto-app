@@ -95,7 +95,7 @@ final class AppModel: ObservableObject {
         }
     }
 
-    private func run(_ action: () async throws -> Void) async {
+    private func run(_ action: @MainActor () async throws -> Void) async {
         guard !busy else { return }
         busy = true
         error = nil
