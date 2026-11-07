@@ -113,6 +113,10 @@ struct ContentView: View {
 
     private func dashboardView(_ data: Dashboard) -> some View {
         List {
+            Section("Staff tools") {
+                NavigationLink("Vehicles") { VehiclesView(model: model) }
+                NavigationLink("Leads") { LeadsView(model: model) }
+            }
             Section("Dashboard") {
                 stat("Available vehicles", data.stats.availableVehicles)
                 stat("Total vehicles", data.stats.totalVehicles)

@@ -5,6 +5,11 @@ staff password and authenticator/recovery-code sign-in, and displays dashboard
 statistics, financials, recent leads and activity. It is not yet a replacement
 for the rest of the website's admin workflows.
 
+The app also provides a read-only, paginated inventory list with status filters
+and lead inbox/spam lists with mark-read, spam/restore, and delete actions.
+Vehicle editing, sales, documents and media, and other administrative workflows
+are not yet implemented natively. Lead rescan and empty-spam remain website-only.
+
 First-time authenticator enrollment, recovery-code saving, and staff profile
 setup are completed on the website. The app directs staff there and asks them
 to sign in again afterwards. Passwords and codes are not saved by the app;

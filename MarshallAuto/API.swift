@@ -75,7 +75,7 @@ final class API {
         return try await perform(request)
     }
 
-    private func get<T: Decodable>(_ path: String) async throws -> T {
+    func get<T: Decodable>(_ path: String) async throws -> T {
         try await perform(makeRequest(path))
     }
 

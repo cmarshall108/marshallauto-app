@@ -1,5 +1,47 @@
 import Foundation
 
+struct VehiclePage: Decodable {
+    let items: [MobileVehicle]
+    let page: Int
+    let pages: Int
+    let hasNext: Bool
+}
+
+struct MobileVehicle: Decodable, Identifiable {
+    let id: Int
+    let title: String
+    let vin: String?
+    let stockNumber: String?
+    let price: String
+    let mileage: Int
+    let status: String
+    let isComingSoon: Bool
+    let createdAt: String
+}
+
+struct LeadPage: Decodable {
+    let items: [MobileLead]
+    let page: Int
+    let pages: Int
+    let hasNext: Bool
+    let inboxCount: Int
+    let spamCount: Int
+}
+
+struct MobileLead: Decodable, Identifiable {
+    let id: Int
+    let createdAt: String
+    let name: String
+    let email: String
+    let phone: String?
+    let message: String?
+    let vehicle: String?
+    let isRead: Bool
+    let isSpam: Bool
+    let spamScore: Int
+    let spamReasons: String?
+}
+
 struct Dashboard: Decodable {
     struct Stats: Decodable {
         let totalVehicles: Int
